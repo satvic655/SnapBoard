@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>SnapBoard – Transform Notes Instantly</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg-primary: #0f0f0f;
+      --bg-secondary: #1a1a1a;
+      --bg-tertiary: #252525;
+      --accent: #ff6b35;
+      --accent-dark: #e55a26;
+      --accent-light: #ff8555;
+      --text: #ffffff;
+      --text-muted: #a0a0a0;
+      --border: #333333;
+      --success: #22c55e;
+      --error: #ef4444;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+    }
+
+    * { 
+      box-sizing: border-box; 
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+      background: var(--bg-primary);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    }
+
+    /* Added header with user menu */
+    .top-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      padding: 0 16px;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--text) 0%, var(--text-muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .user-menu-container {
+      position: relative;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      border: 2px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .user-avatar:hover {
+      border-color: var(--accent);
+      transform: scale(1.05);
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      min-width: 200px;
+      z-index: 1000;
+      display: none;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .dropdown-menu.active {
+      display: block;
+    }
+
+    .dropdown-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), transparent);
+    }
+
+    .dropdown-header-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin: 0 0 4px;
+    }
+
+    .dropdown-header-subtitle {
+      font-size: 13px;
+      color: var(--text);
+      margin: 0;
+    }
+
+    .dropdown-item {
+      padding: 12px 16px;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    .dropdown-item:hover {
+      background: rgba(255, 107, 53, 0.1);
+      padding-left: 20px;
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    .dropdown-item.logout {
+      color: var(--error);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
+      flex: 1;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .header-badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+      padding: 6px 12px;
+      background: rgba(255, 107, 53, 0.1);
+      border: 1px solid rgba(255, 107, 53, 0.3);
+      border-radius: 999px;
+    }
+
+    header h1 {
+      margin: 0 0 12px;
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--text) 0%, var(--text-muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    header p {
+      margin: 0;
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-top: 32px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+    }
+
+    .feature-item {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .feature-item strong {
+      color: var(--text);
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 900px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(255, 107, 53, 0.05), rgba(255, 107, 53, 0.02));
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin: 0 0 20px;
+    }
+
+    /* Camera and Upload mode tabs */
+    .mode-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+
+    .mode-tab {
+      padding: 8px 16px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -14px;
+    }
+
+    .mode-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .mode-tab:hover {
+      color: var(--text);
+    }
+
+    .upload-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .preview-container {
+      background: radial-gradient(circle at 30% 30%, rgba(255, 107, 53, 0.15), transparent 70%),
+                  var(--bg-tertiary);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-md);
+      min-height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .preview-container.has-image {
+      border-color: var(--accent);
+      background: radial-gradient(circle at 30% 30%, rgba(255, 107, 53, 0.25), transparent 70%),
+                  var(--bg-tertiary);
+    }
+
+    /* Camera video display */
+    #cameraVideo {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      border-radius: var(--radius-md);
+      display: none;
+      background: var(--bg-tertiary);
+    }
+
+    #preview {
+      max-width: 100%;
+      max-height: 160px;
+      border-radius: var(--radius-md);
+      display: none;
+      object-fit: contain;
+    }
+
+    .preview-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .preview-icon {
+      font-size: 32px;
+      opacity: 0.6;
+    }
+
+    .upload-controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    input[type="file"] {
+      flex: 1;
+      min-width: 200px;
+      padding: 10px 14px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    input[type="file"]:hover {
+      border-color: var(--accent);
+      background: rgba(255, 107, 53, 0.05);
+    }
+
+    input[type="file"]::file-selector-button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 12px;
+      margin-right: 10px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: white;
+      box-shadow: 0 8px 24px rgba(255, 107, 53, 0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(255, 107, 53, 0.45);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: default;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      background: rgba(255, 107, 53, 0.08);
+    }
+
+    .btn-secondary:active {
+      transform: scale(0.98);
+    }
+
+    .editor-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 300px;
+      padding: 16px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text);
+      font-family: "Menlo", "Monaco", "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      resize: vertical;
+      transition: all 0.2s ease;
+    }
+
+    textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+    }
+
+    .editor-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.error {
+      background: var(--error);
+      animation: none;
+    }
+
+    .status-text.error {
+      color: var(--error);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    footer {
+      margin-top: 48px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <!-- Added user menu header -->
+  <div class="top-nav">
+    <div class="logo">SnapBoard</div>
+    <div class="user-menu-container">
+      <div class="user-avatar" id="userAvatar">U</div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <div class="dropdown-header">
+          <div class="dropdown-header-title">User</div>
+          <p class="dropdown-header-subtitle">user@snapboard.ai</p>
+        </div>
+        <button class="dropdown-item">👤 Profile</button>
+        <button class="dropdown-item">📋 History</button>
+        <button class="dropdown-item">⚙️ Settings</button>
+        <div class="dropdown-divider"></div>
+        <button class="dropdown-item logout">🚪 Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <header>
+      <div class="header-badge">Open Source · Offline</div>
+      <h1>SnapBoard</h1>
+      <p>Transform your whiteboard notes into clean, editable text in seconds</p>
+      <div class="features">
+        <div class="feature-item">📸 <strong>Local OCR</strong></div>
+        <div class="feature-item">⚡ <strong>Instant</strong></div>
+        <div class="feature-item">🔒 <strong>Private</strong></div>
+        <div class="feature-item">📥 <strong>Export</strong></div>
+      </div>
+    </header>
+
+    <div class="main-grid">
+      <!-- Upload Card -->
+      <div class="card">
+        <h2 class="card-title">Capture Image</h2>
+        <!-- Added mode tabs for upload and camera -->
+        <div class="mode-tabs">
+          <button class="mode-tab active" id="uploadTab">📁 Upload</button>
+          <button class="mode-tab" id="cameraTab">📷 Live Camera</button>
+        </div>
+        <div class="upload-section">
+          <div class="preview-container" id="previewContainer">
+            <img id="preview" alt="Preview" />
+            <video id="cameraVideo"></video>
+            <div class="preview-placeholder" id="previewPlaceholder">
+              <div class="preview-icon">📷</div>
+              <div>No image selected</div>
+            </div>
+          </div>
+          <div class="upload-controls">
+            <input type="file" id="imageInput" accept="image/*" />
+            <button class="btn btn-primary" id="uploadBtn">Extract</button>
+          </div>
+          <!-- Camera controls -->
+          <div id="cameraControls" style="display: none; gap: 12px; display: flex;">
+            <button class="btn btn-primary" id="startCameraBtn">Start Camera</button>
+            <button class="btn btn-secondary" id="captureCameraBtn" style="display: none;">📸 Capture</button>
+            <button class="btn btn-secondary" id="stopCameraBtn" style="display: none;">Stop</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Editor Card -->
+      <div class="card">
+        <h2 class="card-title">Extracted Text</h2>
+        <div class="editor-section">
+          <textarea id="output" placeholder="Your extracted text will appear here..."></textarea>
+          <div class="editor-footer">
+            <div class="status">
+              <div class="status-dot" id="statusDot"></div>
+              <span class="status-text" id="statusText">Ready</span>
+            </div>
+            <div style="color: var(--text-muted);">Editable</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="card">
+      <h2 class="card-title">Actions</h2>
+      <div class="actions-grid">
+        <button class="btn btn-secondary" id="cleanBtn">✨ Clean Text</button>
+        <button class="btn btn-secondary" id="downloadTxtBtn">📄 Download TXT</button>
+        <button class="btn btn-secondary" id="downloadPdfBtn">📕 Download PDF</button>
+      </div>
+    </div>
+
+    <footer>
+      <p>SnapBoard • Powered by Tesseract & Flask • Built for hackathons</p>
+    </footer>
+  </div>
+
+  <script>
+    const imageInput = document.getElementById('imageInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const previewImg = document.getElementById('preview');
+    const previewPlaceholder = document.getElementById('previewPlaceholder');
+    const previewContainer = document.getElementById('previewContainer');
+    const output = document.getElementById('output');
+    const cleanBtn = document.getElementById('cleanBtn');
+    const downloadTxtBtn = document.getElementById('downloadTxtBtn');
+    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+    const statusText = document.getElementById('statusText');
+    const statusDot = document.getElementById('statusDot');
+
+    const userAvatar = document.getElementById('userAvatar');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+
+    userAvatar.addEventListener('click', () => {
+      dropdownMenu.classList.toggle('active');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.user-menu-container')) {
+        dropdownMenu.classList.remove('active');
+      }
+    });
+
+    const uploadTab = document.getElementById('uploadTab');
+    const cameraTab = document.getElementById('cameraTab');
+    const cameraVideo = document.getElementById('cameraVideo');
+    const cameraControls = document.getElementById('cameraControls');
+    const startCameraBtn = document.getElementById('startCameraBtn');
+    const captureCameraBtn = document.getElementById('captureCameraBtn');
+    const stopCameraBtn = document.getElementById('stopCameraBtn');
+    let cameraStream = null;
+
+    uploadTab.addEventListener('click', () => {
+      uploadTab.classList.add('active');
+      cameraTab.classList.remove('active');
+      document.querySelector('.upload-controls').style.display = 'flex';
+      cameraControls.style.display = 'none';
+      if (cameraStream) stopCamera();
+      previewImg.style.display = 'block';
+      cameraVideo.style.display = 'none';
+    });
+
+    cameraTab.addEventListener('click', () => {
+      cameraTab.classList.add('active');
+      uploadTab.classList.remove('active');
+      document.querySelector('.upload-controls').style.display = 'none';
+      cameraControls.style.display = 'flex';
+      previewImg.style.display = 'none';
+    });
+
+    async function startCamera() {
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' } 
+        });
+        cameraVideo.srcObject = cameraStream;
+        cameraVideo.style.display = 'block';
+        previewPlaceholder.style.display = 'none';
+        startCameraBtn.style.display = 'none';
+        captureCameraBtn.style.display = 'inline-flex';
+        stopCameraBtn.style.display = 'inline-flex';
+        setStatus('Camera ready · click capture');
+      } catch (err) {
+        console.error(err);
+        setStatus('Camera access denied', true);
+      }
+    }
+
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      cameraVideo.style.display = 'none';
+      previewPlaceholder.style.display = 'flex';
+      startCameraBtn.style.display = 'inline-flex';
+      captureCameraBtn.style.display = 'none';
+      stopCameraBtn.style.display = 'none';
+      setStatus('Ready');
+    }
+
+    function captureFromCamera() {
+      const canvas = document.createElement('canvas');
+      canvas.width = cameraVideo.videoWidth;
+      canvas.height = cameraVideo.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(cameraVideo, 0, 0);
+      canvas.toBlob((blob) => {
+        imageInput.files = new DataTransfer().items;
+        const dt = new DataTransfer();
+        dt.items.add(new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' }));
+        imageInput.files = dt.files;
+        previewImg.src = canvas.toDataURL();
+        previewImg.style.display = 'block';
+        cameraVideo.style.display = 'none';
+        previewPlaceholder.style.display = 'none';
+        setStatus('Image captured · ready to extract');
+      }, 'image/jpeg');
+    }
+
+    startCameraBtn.addEventListener('click', startCamera);
+    stopCameraBtn.addEventListener('click', stopCamera);
+    captureCameraBtn.addEventListener('click', captureFromCamera);
+
+    function setStatus(text, isError = false) {
+      statusText.textContent = text;
+      statusText.classList.toggle('error', isError);
+      statusDot.classList.toggle('error', isError);
+    }
+
+    imageInput.addEventListener('change', () => {
+      const file = imageInput.files[0];
+      if (!file) {
+        previewImg.style.display = 'none';
+        previewPlaceholder.style.display = 'flex';
+        previewContainer.classList.remove('has-image');
+        setStatus('Ready');
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      previewImg.src = url;
+      previewImg.style.display = 'block';
+      previewPlaceholder.style.display = 'none';
+      previewContainer.classList.add('has-image');
+      setStatus('Image loaded · ready to extract');
+    });
+
+    uploadBtn.addEventListener('click', async () => {
+      const file = imageInput.files[0];
+      if (!file) {
+        alert('Please select an image first');
+        return;
+      }
+
+      uploadBtn.disabled = true;
+      setStatus('Extracting text...');
+
+      const formData = new FormData();
+      formData.append('image', file);
+
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          const msg = data.error || `Error: ${res.status}`;
+          setStatus(msg, true);
+        } else {
+          output.value = data.cleaned || data.raw || '';
+          setStatus('Extraction complete');
+        }
+      } catch (err) {
+        console.error(err);
+        setStatus('Network error · check backend', true);
+      } finally {
+        uploadBtn.disabled = false;
+      }
+    });
+
+    cleanBtn.addEventListener('click', () => {
+      const text = output.value;
+      if (!text.trim()) {
+        setStatus('Nothing to clean', true);
+        return;
+      }
+      const cleaned = text
+        .split('\n')
+        .map(l => l.trim())
+        .filter((line, idx, arr) => !(line === '' && arr[idx - 1] === ''))
+        .join('\n');
+      output.value = cleaned;
+      setStatus('Text cleaned');
+    });
+
+    async function downloadFile(endpoint, filename) {
+      const text = output.value;
+      if (!text.trim()) {
+        alert('No text to download');
+        return;
+      }
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        setStatus('Download complete');
+      } catch (err) {
+        console.error(err);
+        setStatus('Download failed', true);
+      }
+    }
+
+    downloadTxtBtn.addEventListener('click', () => {
+      downloadFile('/api/download_txt', 'notes.txt');
+    });
+
+    downloadPdfBtn.addEventListener('click', () => {
+      downloadFile('/api/download_pdf', 'notes.pdf');
+    });
+  </script>
+</body>
+</html>
